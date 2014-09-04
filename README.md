@@ -1,38 +1,13 @@
+## Pulling images from EEN API ##
 
-*Please fork and contribute your own hacks*
+This project shows how to use Python and Google App Engine to proxy and strip authentication off of preview images.
 
+#### Why would I want this? ####
+If you want to serve an image on a public website without people having to log in or have accounts
 
-## Quick start python template for Google App Engine ##
+#### Can I do this without getting in trouble? ####
+Sure, just tell them that mcotton said it was cool
 
-You'll need to do several things before your first deploy.
-
-*First*: open up app.yaml and replace 'app' with your own app name
-
->  application: app
-
-*Second*: remember to update the version line, trust me, it'll be helpful when
-you deploy.  Make sure to mention/tag the git log with the deployed version.
-
->  version: app-1
-
-*Third*:  make sure to version your local datastore.  I can not think of any
-reason not to do this.
-Depending on what platform you use, you will need to add these flags when your
-app starts in the development console.
-
->  --datastore_path=/path/to/datastore
-
-*Fourth*: your models live in usermodels.py
-
-*Fifth*: if you want to use some other Django template, change these lines in
-main.py
-
->  import os  
->  os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'  
->  from google.appengine.dist import use_library  
->  use_library('django', '0.96')  
-
-*Includes*
- - jQuery hosted on google's CDN
-
+#### Is there a cost?  ####
+Nope, its open source so have fun.
 
