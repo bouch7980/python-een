@@ -2,12 +2,14 @@
 
 #  Routes
 #  /
-#  
+#
 
 #  Decorators
 #  @login_required
 
 import os
+import re
+import logging
 
 # They are changing Django version, need to include this
 # http://code.google.com/appengine/docs/python/tools/libraries.html#Django
@@ -21,74 +23,90 @@ import json as simplejson
 
 import wsgiref.handlers, logging
 import cgi, time, datetime
-#from google.appengine.ext.webapp import template
-#from google.appengine.ext import webapp
-from google.appengine.ext.webapp.util import run_wsgi_app
-#  from google.appengine.ext.webapp.util import login_required
-#  from google.appengine.api import users
-#  from google.appengine.api import mail
-#  from google.appengine.api import memcache
-#  from google.appengine.api import taskqueue
 
+from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.api import memcache
 from google.appengine.api import urlfetch
+from google.appengine.api import users
 
-
-from usermodels import *  #I'm storing my models in usermodels.py
-
-
-class EagleEye():
-  def __init():
-    self.cookies = None
-
-  def authenticate(self):
-    pass
-
-  def authorize(self):
-    pass
-
-  def get_auth(self):
-      # get key from memcache
-      token = memcache.get('auth_token')
-
-      # go get an Auth token
-      if token is not None:
-        return token
-      else:
-        memcache.set('auth_token', '<token>')
-        get_auth() 
+from usermodels import *  # I'm storing my models in usermodels.py
+from EagleEye import *
 
 een = EagleEye()
 
 class MainHandler(webapp2.RequestHandler):
   def get(self, resource=''):
-    render_template(self, 'templates/index.html')
+    #Check to see if user is an admin, and display correct link
+    admin = users.is_current_user_admin()
+    if admin:
+      admin_url = users.create_logout_url("/")
+      admin_url_text = 'Logout'
+    else:
+      admin_url = users.create_login_url("/")
+      admin_url_text = 'Login'
+
+    template_values = {
+      'admin_url': admin_url,
+      'admin_url_text': admin_url_text
+    }
+
+    render_template(self, 'templates/index.html', template_values)
 
 class ImageHandler(webapp2.RequestHandler):
   def get(self, resource=''):
-    #make the url
-    pattern = "https://login.eagleeyenetworks.com/asset/prev/image.jpeg?c=%s&t=now&a=pre&A=%s" 
-    url = pattern % (resource, een.get_auth())
-   
-    # make the request
-    result = urlfetch.fetch(url)
-   
-    # do something with the results
-    if result.status_code == 200:
-      self.response.headers['Content-Type'] = 'image/jpeg'
-      self.response.out.write(result.content)
+    if resource is not '':
+      image = een.get_image(resource)
+      if image is not None:
+        self.response.headers['Content-Type'] = 'image/jpeg'
+        self.response.out.write(een.get_image(resource))
 
-    if result.status_code == 401:
-      pass
+class CredentialHandler(webapp2.RequestHandler):
+  def get(self):
+    #Check to see if user is an admin, and display correct link
+    admin = users.is_current_user_admin()
+    if admin:
+      admin_url = users.create_logout_url("/")
+      admin_url_text = 'Logout'
+    else:
+      admin_url = users.create_login_url("/")
+      admin_url_text = 'Login'
 
-    if result.status_code == 403:
-      pass
+    username = None
+    password = None
+    active = None
+    c = Credentials().all().fetch(1)
+    if c:
+      #found a record
+      for i in c:
+        username = i.username
+        password = i.password
+        active = i.active
+
+    template_values = {
+      'username': username,
+      'password': password,
+      'active': active,
+      'admin_url': admin_url,
+      'admin_url_text': admin_url_text
+    }
+
+    render_template(self, 'templates/credentials.html', template_values)
+
+  def post(self):
+    #if users.is_current_user_admin():
+    c = Credentials()
+    c.username = self.request.get("username")
+    c.password = self.request.get("password")
+    c.put()
+
+    self.redirect("/credentials")
+
 
 
 def is_local():
-  # Turns on debugging error messages if on local env  
-  return os.environ["SERVER_NAME"] in ("localhost")  
-    
+  # Turns on debugging error messages if on local env
+  return os.environ["SERVER_NAME"] in ("localhost")
+
 def render_template(call_from, template_name, template_values=dict()):
   # Makes rendering templates easier.
   path = os.path.join(os.path.dirname(__file__), template_name)
@@ -97,9 +115,10 @@ def render_template(call_from, template_name, template_values=dict()):
 def render_json(self, data):
   self.response.headers['Content-Type'] = 'application/json'
   self.response.out.write(simplejson.dumps(data))
-  
+
 
 
 app = webapp2.WSGIApplication([('/', MainHandler),
-                              ('/image/([^/]+)?', ImageHandler)],
+                              ('/image/([^/]+)?', ImageHandler),
+                              ('/credentials', CredentialHandler)],
                               debug = is_local())

@@ -1,8 +1,14 @@
 {% extends "template.html" %}
 
 {% block container %}
-        <h1>howdy</h1> 
+        <h1>howdy</h1>
 {% endblock %}
 
 
-
+{% block footer %}
+      <div id='footer'>
+        <span>
+            <a href="{{ admin_url }}">{{ admin_url_text }}</a>
+        </span>
+      </div>
+{% endblock %}
