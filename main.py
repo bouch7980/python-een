@@ -74,7 +74,8 @@ class CredentialHandler(webapp2.RequestHandler):
     username = None
     password = None
     active = None
-    c = Credentials().all().fetch(1)
+    c = Credentials().all().filter('active =', True).fetch(1)
+    all = Credentials().all().filter('active !=', True).fetch(50)
     if c:
       #found a record
       for i in c:
@@ -83,6 +84,7 @@ class CredentialHandler(webapp2.RequestHandler):
         active = i.active
 
     template_values = {
+      'all': all,
       'username': username,
       'password': password,
       'active': active,
@@ -97,6 +99,10 @@ class CredentialHandler(webapp2.RequestHandler):
     c = Credentials()
     c.username = self.request.get("username")
     c.password = self.request.get("password")
+    if self.request.get("active"):
+      c.active = True
+    else:
+      c.active = False
     c.put()
 
     self.redirect("/credentials")

@@ -19,7 +19,7 @@ class EagleEye():
 
     if not username and not password:
       logging.warning('username and password are not in memcache, pulling latest from datastore')
-      c = Credentials().all().fetch(1)
+      c = Credentials().all().filter('active =', True).fetch(1)
       if c:
         #found a record
         for i in c:
@@ -64,6 +64,7 @@ class EagleEye():
       result = urlfetch.fetch(url=url)
       if result.status_code == 401:
         logging.warning('got a 401 for get_image, calling login')
+        memcache.set('auth_token', None) # clear out the auth_token
         self.login()
         self.get_image(esn)
       if result.status_code == 200:
@@ -72,3 +73,12 @@ class EagleEye():
       logging.info("don't have a cooke in memcache, calling login()")
       self.login()
       self.get_image(esn)
+
+  def get_device_list(self):
+    token = self.get_auth()
+    if token is not None:
+      pass
+    else:
+      logging.info("don't have a cookie in memcache, calling login()")
+      self.login()
+      self.get_device_list()
