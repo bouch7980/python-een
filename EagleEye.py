@@ -8,7 +8,7 @@ from usermodels import *  # I'm storing my models in usermodels.py
 class EagleEye():
 
   def __init__(self):
-    self.cookie = None
+    self.cookie = ''
     self.host = "https://apidocs.eagleeyenetworks.com"
 
   def login(self):
@@ -45,6 +45,7 @@ class EagleEye():
       matches = re.search('videobank_sessionid=([\w]*);', result.headers['set-cookie'])
       self.cookie = matches.group(1)
       memcache.set('auth_token', self.cookie)
+      memcache.set('full_cookie', result.headers['set-cookie'])
       logging.info('done login()')
       return simplejson.loads(result.content)
 
@@ -53,7 +54,15 @@ class EagleEye():
     token =  memcache.get('auth_token')
     if token:
       return token
-    return None
+    else:
+      logging.info("don't have a cookie in memcache, calling login()")
+      self.login()
+      return self.get_auth()
+
+  def handle_401(self):
+    memcache.set('auth_token', None)
+    logging.info('caught a 401, clearing memcache and calling login()')
+    self.login()
 
   def get_image(self, esn, direction='prev'):
     token = self.get_auth()
@@ -62,23 +71,33 @@ class EagleEye():
       url = pattern % (direction, esn, token)
       logging.info('already have a cookie in memcache, get_image URL: ' + url)
       result = urlfetch.fetch(url=url)
-      if result.status_code == 401:
-        logging.warning('got a 401 for get_image, calling login')
-        memcache.set('auth_token', None) # clear out the auth_token
-        self.login()
-        self.get_image(esn)
+
       if result.status_code == 200:
         return result.content
+
+      if result.status_code == 401:
+        self.handle_401()
+        self.get_image(esn)
     else:
-      logging.info("don't have a cooke in memcache, calling login()")
-      self.login()
-      self.get_image(esn)
+      pass
+
 
   def get_device_list(self):
     token = self.get_auth()
     if token is not None:
-      pass
+      url = self.host + "/g/list/devices"
+      result = urlfetch.fetch(url=url,
+                              headers={'Content-Type': 'application/json',
+                                       'Cookie': memcache.get('full_cookie')})
+      if result.status_code == 200:
+        logging.info('successfully grabbed list devices')
+        return simplejson.loads(result.content)
+
+      if result.status_code < 200:
+        logging.warning('%s when getting list devices' % result.status_code)
+
+      if result.status_code == 401:
+        self.handle_401()
+
     else:
-      logging.info("don't have a cookie in memcache, calling login()")
-      self.login()
-      self.get_device_list()
+      pass
