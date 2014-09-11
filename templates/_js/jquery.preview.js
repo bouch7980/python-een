@@ -24,20 +24,6 @@
         $preview.width(width + 'px');
         $preview.height(height + 'px');
 
-        function login() {
-            if(lockout) {
-                // force a 5 second delay between login attempts
-                setTimeout(login, 5000)
-            } else {
-                lockout = true
-                $.get('login.php', function() {
-                    if(debug) console.log('jQuery.preview: login successful');
-                    setTimeout(updatePreview, 0)
-                    lockout = false
-                });
-            }
-        }
-
         function updatePreview() {
             $preview.attr('src', '/image/' + camera_id + '?rand=' + Math.random());
             if(debug) console.log('jQuery.preview: updating image');
@@ -50,7 +36,6 @@
 
         $preview.on('error', function() {
             if(debug) console.log('jQuery.preview: image error');
-            login();
         });
 
 

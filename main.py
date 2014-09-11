@@ -13,8 +13,8 @@ import logging
 
 # They are changing Django version, need to include this
 # http://code.google.com/appengine/docs/python/tools/libraries.html#Django
-from google.appengine.dist import use_library
-use_library('django', '1.2')
+#from google.appengine.dist import use_library
+#use_library('django', '1.2')
 from google.appengine.ext.webapp import template
 
 import webapp2
