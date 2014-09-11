@@ -83,9 +83,14 @@ class CredentialHandler(webapp2.RequestHandler):
         password = i.password
         active = i.active
 
+    devices = een.get_device_list()
+    device_list = list()
+    if devices is not None:
+      device_list = [i for i in devices if i[3] == "camera"]
+
     template_values = {
       'all': all,
-      'devices': [i for i in een.get_device_list() if i[3] == "camera"],
+      'devices': device_list,
       'username': username,
       'password': password,
       'active': active,

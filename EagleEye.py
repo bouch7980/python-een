@@ -25,6 +25,9 @@ class EagleEye():
         for i in c:
           username = i.username
           password = i.password
+      else:
+        logging.error("no credentials in memcache or datastore")
+        return False
 
     payload = {'username': username, 'password': password}
 
@@ -57,7 +60,6 @@ class EagleEye():
     else:
       logging.info("don't have a cookie in memcache, calling login()")
       self.login()
-      return self.get_auth()
 
   def handle_401(self):
     memcache.set('auth_token', None)
@@ -99,5 +101,7 @@ class EagleEye():
       if result.status_code == 401:
         self.handle_401()
 
+      return list()
+
     else:
-      pass
+      self.login()
