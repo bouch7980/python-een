@@ -36,6 +36,7 @@
 
         $preview.on('error', function() {
             if(debug) console.log('jQuery.preview: image error');
+            setTimeout(updatePreview, delay)
         });
 
 
