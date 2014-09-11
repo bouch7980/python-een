@@ -105,3 +105,11 @@ class EagleEye():
 
     else:
       self.login()
+
+  def make_all_not_active(self):
+    c = Credentials().all().filter('active =', True)
+    collection = []
+    for i in c:
+      i.active = False
+      collection.append(i)
+    db.put(collection)

@@ -1,5 +1,5 @@
-application: python-een 
-version: app-1 
+application: een-awesome 
+version: app-1
 runtime: python27
 api_version: 1
 threadsafe: true
@@ -17,14 +17,14 @@ handlers:
 
 - url: /css
   static_dir: templates/_css
-  
+
 - url: /js
   static_dir: templates/_js
 
 - url: /favicon.ico
   static_files: templates/_images/favicon.ico
   upload: templates/_images/favicon.ico
-  
+
 - url: /robots.txt
   static_files: templates/_images/robots.txt
   upload: templates/_images/favicon.ico
