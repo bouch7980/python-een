@@ -1,4 +1,4 @@
-import re, urllib, logging
+import re, urllib, logging, datetime, time
 from google.appengine.api import memcache
 from google.appengine.api import urlfetch
 import json as simplejson
@@ -67,14 +67,26 @@ class EagleEye():
     self.login()
 
   def get_image(self, esn, direction='prev'):
+    #check if we already have a good image
+    last = memcache.get(esn + '_last_image_update')
+    if last:
+      last = self.StoD(last)
+      delta = last + datetime.timedelta(seconds=1)
+      if delta > datetime.datetime.today():
+        logging.info('returning image from memcache for %s' % esn)
+        return memcache.get(esn + '_last_image')
+      else:
+        logging.info('image in memcache is %s stale.' % str(datetime.datetime.today() - last))
+
     token = self.get_auth()
     if token is not None:
       pattern = self.host + "/asset/%s/image.jpeg?c=%s&t=now&a=pre&A=%s"
       url = pattern % (direction, esn, token)
-      logging.info('already have a cookie in memcache, get_image URL: ' + url)
       result = urlfetch.fetch(url=url)
 
       if result.status_code == 200:
+        memcache.set(esn + '_last_image_update', result.headers['x-ee-timestamp'][8:])
+        memcache.set(esn + '_last_image', result.content)
         return result.content
 
       if result.status_code == 401:
@@ -113,3 +125,11 @@ class EagleEye():
       i.active = False
       collection.append(i)
     db.put(collection)
+
+  def StoD(self, date_str):
+    return datetime.datetime(int(date_str[0:4]),
+                             int(date_str[4:6]),
+                             int(date_str[6:8]),
+                             int(date_str[8:10]),
+                             int(date_str[10:12]),
+                             int(date_str[12:14]))

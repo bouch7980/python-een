@@ -60,7 +60,7 @@ class ImageHandler(webapp2.RequestHandler):
       image = een.get_image(resource)
       if image is not None:
         self.response.headers['Content-Type'] = 'image/jpeg'
-        self.response.out.write(een.get_image(resource))
+        self.response.out.write(image)
 
 
 
