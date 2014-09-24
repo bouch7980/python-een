@@ -9,8 +9,10 @@
             height      =   options.height || 180,
             delay       =   options.delay || 1000
             preview     =   new Image(),
+            buffer      =   new Image(),
             lockout     =   false,
-            debug       =   options.debug || false;
+            debug       =   options.debug || false,
+            currURL     =   '';
 
         if(!camera_id) {
             // can't do anything without a camera_id
@@ -20,21 +22,24 @@
         // add preview image to calling div
         this.append(preview);
         $preview = $(preview);
+        $buffer = $(buffer);
 
         $preview.width(width + 'px');
         $preview.height(height + 'px');
 
         function updatePreview() {
-            $preview.attr('src', '/image/' + camera_id + '?rand=' + Math.random());
+            currURL = '/image/' + camera_id + '?rand=' + Math.random()
+            $buffer.attr('src', currURL);
             if(debug) console.log('jQuery.preview: updating image');
         }
 
-        $preview.on('load', function() {
+        $buffer.on('load', function() {
+            $preview.attr('src', currURL)
             setTimeout(updatePreview, delay)
         });
 
 
-        $preview.on('error', function() {
+        $buffer.on('error', function() {
             if(debug) console.log('jQuery.preview: image error');
             setTimeout(updatePreview, delay)
         });
